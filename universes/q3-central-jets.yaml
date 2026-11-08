@@ -1,0 +1,4 @@
+id: q3_central_jets
+description: q3 - plot jets with strict abs(eta)<1; synthetic data only.
+decisions:
+  jet_acceptance: central_jets

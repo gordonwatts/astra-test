@@ -1,0 +1,8 @@
+bins: 50
+low: 0.0
+high: 300.0
+x_label: Jet transverse momentum [GeV]
+y_label: Jets / 6 GeV
+description: >-
+  Fixed display range for comparison. Count underflow and overflow separately;
+  compute metrics from raw selected values before restricting the plot range.

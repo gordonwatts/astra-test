@@ -1,0 +1,86 @@
+version: "0.0.14"
+id: jet_pt_demo
+name: Jet transverse momentum - offline ASTRA demonstration
+description: >-
+  Compare q2 (all jets) and q3 (jets with abs(eta)<1) from
+  iris-hep-llm-performance. This implementation uses synthetic events only.
+  The requested Rucio DID is recorded in config/servicex-request.yaml; no real
+  input file has been identified or fetched. This is not a benchmark result.
+tags: [ATLAS, demonstration, synthetic, q2, q3]
+
+inputs:
+  - id: servicex_request
+    type: data
+    source: config/servicex-request.yaml
+    description: Intended one-file ServiceX request and explicit mock-generator settings.
+  - id: analysis_code
+    type: data
+    source: script.py
+    description: Offline provider, jet selection, raw-value metrics, and plotting implementation.
+  - id: environment_lock
+    type: data
+    source: requirements.txt
+    description: Pinned Python dependencies for this demonstration.
+  - id: plot_settings
+    type: data
+    source: config/plot.yaml
+    description: Display binning only; histogram limits do not restrict the metric calculation.
+
+decisions:
+  jet_acceptance:
+    label: Which jets enter the transverse-momentum distribution?
+    rationale: >-
+      The two source prompts differ only in jet acceptance. No event selection,
+      additional transverse-momentum cut, or weights are introduced. These are
+      two requested analysis configurations, not systematic variations.
+    default: all_jets
+    options:
+      all_jets:
+        label: All jets (q2)
+        description: One entry for every jet; retain zero-jet events in the denominator.
+      central_jets:
+        label: Central jets (q3)
+        description: Strict abs(eta)<1 per jet; retain events with no passing jets.
+
+outputs:
+  - id: jet_sample
+    type: data
+    format: json
+    description: >-
+      Synthetic stand-in for one ServiceX delivery. One record per event with
+      aligned jet_pt (GeV) and jet_eta arrays, including events with zero jets.
+      Both universes use identical deterministic input content.
+    inputs: [servicex_request, analysis_code, environment_lock]
+    recipe:
+      command: >-
+        python {inputs.analysis_code} fetch
+        --request {inputs.servicex_request} --out {output}
+
+  - id: jet_pt_plot
+    type: figure
+    format: png
+    description: >-
+      Unweighted jet pT distribution, marked SYNTHETIC. The command prints one
+      METRIC line computed from all selected raw values, including overflow.
+    inputs: [jet_sample, analysis_code, environment_lock, plot_settings]
+    decisions: [jet_acceptance]
+    recipe:
+      command: >-
+        python {inputs.analysis_code} plot
+        --jets {inputs.jet_sample} --acceptance {decisions.jet_acceptance}
+        --settings {inputs.plot_settings} --out {output}
+
+  - id: jet_metrics
+    type: table
+    format: json
+    description: >-
+      Unweighted raw-value mean in GeV, number of selected jets, number of
+      events, and entries/event. Synthetic metrics must not be compared with
+      the source benchmark's reference numbers as a physics validation.
+    inputs: [jet_sample, analysis_code, environment_lock]
+    decisions: [jet_acceptance]
+    recipe:
+      command: >-
+        python {inputs.analysis_code} metrics
+        --jets {inputs.jet_sample} --acceptance {decisions.jet_acceptance}
+        --out {output}

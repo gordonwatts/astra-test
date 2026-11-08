@@ -1,0 +1,4 @@
+id: q2_all_jets
+description: q2 - plot every jet; synthetic data only.
+decisions:
+  jet_acceptance: all_jets

@@ -1,0 +1,10 @@
+.venv/
+.uv-cache/
+__pycache__/
+.mplconfig/
+results/
+*.py[cod]
+.env
+.env.*
+!.env.example
+servicex.yaml
